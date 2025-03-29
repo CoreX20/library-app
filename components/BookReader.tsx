@@ -62,6 +62,11 @@ const BookReader = ({
                 progress.location,
               );
               // console.log("Progress diambil dari API:", progress.location);
+            } else {
+              // First time user reads the book, starting from the beginning
+              setLocation(0);
+              localStorage.setItem(`bookprogress-${book_id}`, "0");
+              lastSavedLocation.current = "0";
             }
           }
         }
