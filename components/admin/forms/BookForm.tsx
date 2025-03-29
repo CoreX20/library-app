@@ -37,7 +37,7 @@ const BookForm = ({ type, ...book }: Props) => {
       rating: 1,
       totalCopies: 1,
       coverUrl: "",
-      coverColor: "#fff",
+      coverColor: "#ffffff",
       videoUrl: "",
       summary: "",
       bookFile: "",
