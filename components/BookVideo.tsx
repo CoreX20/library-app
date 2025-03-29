@@ -18,7 +18,7 @@ const BookVideo = ({ videoUrl }: { videoUrl: string }) => {
 
       <iframe
         className="w-full h-56 md:h-screen rounded-xl"
-        // allow="accelerometer; fullscreen; encrypted-media"
+        loading="lazy"
         src={videoUrl}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         referrerPolicy="no-referrer"
