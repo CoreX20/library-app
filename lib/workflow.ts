@@ -26,7 +26,7 @@ export const sendEmail = async ({
       provider: resend({ token: config.env.resendToken }),
     },
     body: {
-      from: "LibNet <onboarding@resend.dev>",
+      from: "LibNet <onboarding@resend.dev>", //change email later <contact@libnet.io>
       to: [email],
       subject,
       html: message,

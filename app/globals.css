@@ -281,6 +281,11 @@
   .library-title {
     @apply mt-2 text-3xl font-semibold text-white xs:text-5xl;
   }
+
+  /*.react-reader-container {*/
+  /*  height: 100vh;*/
+  /*  width: 100vw;*/
+  /*}*/
 }
 
 @layer base {
