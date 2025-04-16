@@ -82,6 +82,30 @@ export const getBookFileUrl = async (
   }
 };
 
+export const getFileType = async(
+  id: string,
+) => {
+  const {
+    env: {
+      imageKit: { publicKey, privateKey, urlEndpoint },
+    },
+  } = config;
+
+  const imagekit = new ImageKit({
+    publicKey: publicKey,
+    privateKey: privateKey,
+    urlEndpoint: urlEndpoint,
+  });
+
+  try {
+    const response = await imagekit.getFileDetails(id)
+    return response.mime;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
 export const fetchProgress = async (user_id: string, book_id: string) => {
   const result = await db
     .select({ location: reading_progress.location })

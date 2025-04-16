@@ -3,10 +3,11 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   fetchProgress,
   getBookFileUrl,
+  getFileType,
   postProgress,
 } from "@/lib/actions/book";
-import { ReactReader } from "react-reader";
-import { Rendition, NavItem } from "epubjs";
+import EpubReader from "./EpubReader";
+import PDFReader from "./PDFReader";
 
 const BookReader = ({
   book_id,
@@ -20,11 +21,9 @@ const BookReader = ({
   bookFile: string;
 }) => {
   const [bookUrl, setBookUrl] = useState<string | null>(null);
-  const [page, setPage] = useState("");
-  const toc = useRef<NavItem[]>([]);
   const [location, setLocation] = useState<string | number>("");
-  const rendition = useRef<Rendition | null>(null);
   const lastSavedLocation = useRef<string | number | null>(null);
+  const [fileType, setFileType] = useState<"pdf" | "epub" | null>(null);
 
   useEffect(() => {
     const initializeBook = async () => {
@@ -32,7 +31,12 @@ const BookReader = ({
         const parts = bookFile.split("/");
         const bookFileFolder = parts.slice(1, -1).join("/");
         const fileName = parts.pop()!;
-        const { url } = await getBookFileUrl(bookFileFolder, fileName);
+
+        const { url, fileId } = await getBookFileUrl(bookFileFolder, fileName);
+        const format = await getFileType(fileId);
+
+        if (format == "application/epub+zip") setFileType("epub");
+        else if (format == "application/pdf") setFileType("pdf");
 
         // const progress = await fetchProgress(user_id, book_id);
         // if (progress?.location) {
@@ -59,7 +63,7 @@ const BookReader = ({
               lastSavedLocation.current = progress.location;
               localStorage.setItem(
                 `bookprogress-${book_id}`,
-                progress.location,
+                progress.location
               );
               // console.log("Progress diambil dari API:", progress.location);
             } else {
@@ -131,57 +135,24 @@ const BookReader = ({
 
   return (
     <div className="h-screen">
-      <ReactReader
-        url={bookUrl}
-        title={title}
-        location={location}
-        locationChanged={(loc: string) => {
-          setLocation(loc);
-          localStorage.setItem(`bookprogress-${book_id}`, loc.toString());
-          if (rendition.current && toc.current) {
-            const { displayed, href } = rendition.current.location.start;
-            const chapter = toc.current.find((item) => item.href === href);
-            setPage(
-              `Page ${displayed.page} of ${displayed.total} in chapter ${
-                chapter ? chapter.label : "n/a"
-              }`,
-            );
-          }
-        }}
-        epubInitOptions={{
-          openAs: "epub",
-        }}
-        epubOptions={{
-          allowPopups: true,
-          allowScriptedContent: true,
-        }}
-        getRendition={(r: Rendition) => {
-          rendition.current = r;
-
-          // Set default font size dan styling
-          r.themes.fontSize("120%");
-          r.themes.register("default-style", {
-            body: {
-              "font-family": "Georgia, serif !important",
-              "line-height": "1.6 !important",
-              "text-align": "justify !important",
-              color: "#333 !important",
-            },
-            p: {
-              "margin-bottom": "1.2em !important",
-            },
-          });
-        }}
-        //   r.themes.select("default-style");
-        //
-        //   r.hooks.content.register((contents: Contents) => {
-        //     // @ts-ignore - manager type is missing in epubjs Rendition
-        //     r.manager.container.style["scroll-behavior"] = "smooth";
-        //   });
-        // }}
-      />
-
-      <p className="text-white font-bold">{page}</p>
+      {fileType === "epub" ? (
+        <EpubReader
+          bookUrl={bookUrl}
+          title={title}
+          book_id={book_id}
+          location={location}
+          onLocationChange={setLocation}
+        />
+      ) : (
+        fileType === "pdf" && (
+          <PDFReader
+            bookUrl={bookUrl}
+            currentPage={Number(location)}
+            onPageChange={setLocation}
+            book_id={book_id}
+          />
+        )
+      )}
     </div>
   );
 };
