@@ -9,6 +9,10 @@ const Home = async () => {
   const session = await auth();
   const userId = String(session?.user?.id);
 
+  if (!userId) {
+    throw new Error("User ID tidak ditemukan dalam session");
+  }
+
   const latestBooks = (await db
     .select()
     .from(books)
@@ -20,8 +24,8 @@ const Home = async () => {
     .where(
       inArray(
         books.id,
-        sql`(SELECT book_id FROM ${reading_progress} WHERE user_id = ${userId})`,
-      ),
+        sql`(SELECT book_id FROM ${reading_progress} WHERE user_id = ${userId})`
+      )
     )) as Book[];
 
   return (

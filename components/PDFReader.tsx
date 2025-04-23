@@ -11,7 +11,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 interface PdfReaderProps {
-  bookUrl: string;
+  bookUrl: string | null;
   currentPage: number;
   onPageChange: (page: number) => void;
   book_id: string;
@@ -28,10 +28,16 @@ const PdfReader = ({
   const [error, setError] = useState<string | null>(null);
   const [containerWidth, setContainerWidth] = useState(1200);
 
+  // Validasi halaman
   const validatedPage = Math.max(1, Math.min(currentPage, numPages || 1));
-  const pdfFile = useMemo(() => ({ url: bookUrl }), [bookUrl]);
 
-  // Responsive width handler
+  // Re-fetch PDF jika URL berubah
+  const pdfFile = useMemo(() => {
+    if (!bookUrl) return null;
+    return { url: bookUrl };
+  }, [bookUrl]);
+
+  // Responsif untuk lebar kontainer
   useEffect(() => {
     const updateWidth = () => {
       const container = document.getElementById("pdf-container");
@@ -43,43 +49,45 @@ const PdfReader = ({
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  //   useEffect(() => {
-  //     const savedPage = localStorage.getItem(`pdfprogress-${book_id}`);
-  //     const initialPage = savedPage
-  //       ? Math.max(1, parseInt(savedPage, 10) || 1)
-  //       : 1;
+  // Membaca halaman yang tersimpan di localStorage pada saat pertama kali load
+  useEffect(() => {
+    const savedPage = localStorage.getItem(`pdfprogress-${book_id}`);
+    const initialPage = savedPage ? parseInt(savedPage, 10) : 1;
+    if (currentPage !== initialPage) {
+      onPageChange(initialPage);
+    }
+  }, [book_id, currentPage, onPageChange]);
 
-  //     if (currentPage !== initialPage) {
-  //       onPageChange(initialPage);
-  //     }
-  //   }, [book_id]);
-
+  // Menangani kesuksesan pemuatan dokumen PDF
   const handleDocumentLoadSuccess = ({ numPages }: PDFDocumentProxy) => {
     setIsLoading(false);
     setNumPages(numPages);
     setError(null);
 
+    // Menangani halaman yang melebihi jumlah total halaman
     if (validatedPage > numPages) {
       const newPage = Math.max(1, numPages);
       onPageChange(newPage);
     }
   };
 
+  // Menangani error ketika dokumen gagal dimuat
   const handleDocumentLoadError = (error: Error) => {
     setIsLoading(false);
-    // setError("Gagal memuat dokumen PDF");
+    setError("Gagal memuat dokumen PDF");
     console.error("PDF load error:", error);
   };
 
+  // Menangani perubahan halaman
   const handlePageChange = (newPage: number) => {
     const page = Math.max(1, Math.min(newPage, numPages || 1));
     onPageChange(page);
-    localStorage.setItem(`bookprogress-${book_id}`, page);
+    localStorage.setItem(`pdfprogress-${book_id}`, page.toString());
   };
 
   return (
     <div className="md:h-full flex flex-col bg-gray-50">
-      {/* Navigation Controls */}
+      {/* Kontrol Navigasi */}
       <div className="hidden lg:block bg-white shadow-sm p-4 flex items-center justify-between gap-2 flex-wrap">
         <div className="flex justify-center items-center gap-2 flex-1">
           <button
@@ -119,7 +127,7 @@ const PdfReader = ({
         </div>
       </div>
 
-      {/* PDF Content */}
+      {/* Konten PDF */}
       <div id="pdf-container" className="flex-1 overflow-auto p-4">
         {error ? (
           <div className="max-w-2xl mx-auto p-6 bg-red-50 rounded-lg text-red-700">
@@ -155,7 +163,7 @@ const PdfReader = ({
         )}
       </div>
 
-      {/* Mobile Floating Controls */}
+      {/* Kontrol Floating untuk Mobile */}
       <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white shadow-xl rounded-lg p-3 border border-gray-200">
         <div className="flex items-center gap-2">
           <button
