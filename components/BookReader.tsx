@@ -7,7 +7,14 @@ import {
   postProgress,
 } from "@/lib/actions/book";
 import EpubReader from "./EpubReader";
-import PDFReader from "./PDFReader";
+// import PDFReader from "./PDFReader";
+
+import dynamic from "next/dynamic";
+
+// Dynamically import PdfReader to ensure it only runs on the client side
+const PDFReader = dynamic(() => import("./PDFReader"), {
+  ssr: false, // Disable SSR for PdfReader
+});
 
 const BookReader = ({
   book_id,
@@ -32,7 +39,11 @@ const BookReader = ({
         const bookFileFolder = parts.slice(1, -1).join("/");
         const fileName = parts.pop()!;
 
-        const { url, fileId } = await getBookFileUrl(bookFileFolder, fileName);
+        const { url, fileId } = (await getBookFileUrl(
+          bookFileFolder,
+          fileName
+        )) as { url: string; fileId: string };
+
         const format = await getFileType(fileId);
 
         if (format == "application/epub+zip") setFileType("epub");
@@ -90,7 +101,7 @@ const BookReader = ({
     }
 
     try {
-      await postProgress(user_id, book_id, location);
+      await postProgress(user_id, book_id, location as string);
       // console.log("Progress tersimpan ke database:", location);
 
       lastSavedLocation.current = location;
@@ -135,7 +146,7 @@ const BookReader = ({
 
   return (
     <div className="h-screen">
-      {fileType === "epub" ? (
+      {fileType === "epub" && bookUrl ? (
         <EpubReader
           bookUrl={bookUrl}
           title={title}
@@ -144,7 +155,8 @@ const BookReader = ({
           onLocationChange={setLocation}
         />
       ) : (
-        fileType === "pdf" && (
+        fileType === "pdf" &&
+        bookUrl && (
           <PDFReader
             bookUrl={bookUrl}
             currentPage={Number(location)}

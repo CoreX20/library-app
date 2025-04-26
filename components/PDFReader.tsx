@@ -5,10 +5,17 @@ import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
-  import.meta.url
-).toString();
+// pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+//   "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
+//   import.meta.url
+// ).toString();
+
+const options = {
+  cMapUrl: "https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/",
+  standardFontDataUrl: "/standard_fonts/",
+};
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
 
 interface PdfReaderProps {
   bookUrl: string | null;
@@ -138,6 +145,7 @@ const PdfReader = ({
         ) : (
           <Document
             file={pdfFile}
+            options={options}
             onLoadSuccess={handleDocumentLoadSuccess}
             onLoadError={handleDocumentLoadError}
             loading={
