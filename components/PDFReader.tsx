@@ -56,15 +56,6 @@ const PdfReader = ({
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  // Membaca halaman yang tersimpan di localStorage pada saat pertama kali load
-  useEffect(() => {
-    const savedPage = localStorage.getItem(`pdfprogress-${book_id}`);
-    const initialPage = savedPage ? parseInt(savedPage, 10) : 1;
-    if (currentPage !== initialPage) {
-      onPageChange(initialPage);
-    }
-  }, [book_id, currentPage, onPageChange]);
-
   // Menangani kesuksesan pemuatan dokumen PDF
   const handleDocumentLoadSuccess = ({ numPages }: PDFDocumentProxy) => {
     setIsLoading(false);
@@ -89,7 +80,7 @@ const PdfReader = ({
   const handlePageChange = (newPage: number) => {
     const page = Math.max(1, Math.min(newPage, numPages || 1));
     onPageChange(page);
-    localStorage.setItem(`pdfprogress-${book_id}`, page.toString());
+    localStorage.setItem(`bookprogress-${book_id}`, page.toString());
   };
 
   return (
