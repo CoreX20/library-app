@@ -7,6 +7,7 @@ import {
   pgEnum,
   date,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const STATUS_ENUM = pgEnum("status", [
@@ -78,4 +79,4 @@ export const reading_progress = pgTable("reading_progress", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
-});
+}, (t) => [uniqueIndex("user_book_unique").on(t.userId, t.bookId)]);

@@ -24,7 +24,6 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   return (
     <BookReader
       book_id={id}
-      user_id={session?.user?.id!}
       title={book[0].title}
       bookFile={book[0].bookFile}
     />

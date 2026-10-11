@@ -44,6 +44,9 @@ const EpubReader = ({
         epubInitOptions={{
           openAs: "epub",
         }}
+        tocChanged={(items: NavItem[]) => {
+          toc.current = items;
+        }}
         pageTurnOnScroll={true}
         epubOptions={{
           allowPopups: true,

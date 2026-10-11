@@ -18,12 +18,10 @@ const PDFReader = dynamic(() => import("./PDFReader"), {
 
 const BookReader = ({
   book_id,
-  user_id,
   title,
   bookFile,
 }: {
   book_id: string;
-  user_id: string;
   title: string;
   bookFile: string;
 }) => {
@@ -39,10 +37,9 @@ const BookReader = ({
         const bookFileFolder = parts.slice(1, -1).join("/");
         const fileName = parts.pop()!;
 
-        const { url, fileId } = (await getBookFileUrl(
-          bookFileFolder,
-          fileName
-        )) as { url: string; fileId: string };
+        const { fileId } = (await getBookFileUrl(bookFileFolder, fileName)) as {
+          fileId: string;
+        };
 
         const format = await getFileType(fileId);
 
@@ -68,7 +65,7 @@ const BookReader = ({
             // console.log("Progress diambil dari Local Storage:", localProgress);
           } else {
             // If it's not in Local Storage, get it from the server
-            const progress = await fetchProgress(user_id, book_id);
+            const progress = await fetchProgress(book_id);
             if (progress?.location) {
               setLocation(progress.location);
               lastSavedLocation.current = progress.location;
@@ -85,30 +82,30 @@ const BookReader = ({
             }
           }
         }
-        setBookUrl(url);
+        // File dikirim lewat route server agar tidak memanggil ik.imagekit.io dari browser
+        setBookUrl(`/api/books/${book_id}/file`);
       } catch (error) {
         console.error(error);
       }
     };
 
     initializeBook();
-  }, [bookFile, user_id, book_id]);
+  }, [bookFile, book_id]);
+
+  const locationRef = useRef(location);
+  locationRef.current = location;
 
   const saveProgress = async () => {
-    if (!user_id || !book_id || !location) return;
-    if (location === lastSavedLocation.current) {
-      return;
-    }
+    const current = locationRef.current;
+    if (!book_id || !current) return;
+    if (current === lastSavedLocation.current) return;
 
-    try {
-      await postProgress(user_id, book_id, location as string);
-      // console.log("Progress tersimpan ke database:", location);
+    const result = await postProgress(book_id, String(current));
+    // Gagal simpan: biarkan localStorage sebagai cadangan
+    if (result?.success === false) return;
 
-      lastSavedLocation.current = location;
-      localStorage.removeItem(`bookprogress-${book_id}`);
-    } catch (error) {
-      console.error(error);
-    }
+    lastSavedLocation.current = current;
+    localStorage.removeItem(`bookprogress-${book_id}`);
   };
 
   //save progress every 15s/30s
@@ -121,6 +118,15 @@ const BookReader = ({
       clearTimeout(debounceTimer);
     };
   }, [location]);
+
+  // Debounce 30 detik bisa terlewat saat tab ditutup, jadi simpan saat tab disembunyikan
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === "hidden") saveProgress();
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, [book_id]);
 
   // save progress when location change
   // useEffect(() => {

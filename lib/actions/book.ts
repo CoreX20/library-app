@@ -6,6 +6,7 @@ import { and, eq } from "drizzle-orm";
 import dayjs from "dayjs";
 import config from "@/lib/config";
 import ImageKit from "imagekit";
+import { auth } from "@/auth";
 
 export const borrowBook = async (params: BorrowBookParams) => {
   const { userId, bookId } = params;
@@ -25,7 +26,7 @@ export const borrowBook = async (params: BorrowBookParams) => {
     }
 
     const dueDate = dayjs().add(7, "day").toDate().toDateString();
-    const record = db
+    const record = await db
       .insert(borrowRecords)
       .values({
         userId,
@@ -106,7 +107,11 @@ export const getFileType = async(
   }
 };
 
-export const fetchProgress = async (user_id: string, book_id: string) => {
+export const fetchProgress = async (book_id: string) => {
+  const session = await auth();
+  const user_id = session?.user?.id;
+  if (!user_id) return undefined;
+
   const result = await db
     .select({ location: reading_progress.location })
     .from(reading_progress)
@@ -119,43 +124,27 @@ export const fetchProgress = async (user_id: string, book_id: string) => {
   return result[0];
 };
 
-export const postProgress = async (
-  user_id: string,
-  book_id: string,
-  location: string,
-) => {
-  try {
-    const existing = await db
-      .select()
-      .from(reading_progress)
-      .where(
-        and(
-          eq(reading_progress.userId, user_id),
-          eq(reading_progress.bookId, book_id),
-        ),
-      );
+export const postProgress = async (book_id: string, location: string) => {
+  const session = await auth();
+  const user_id = session?.user?.id;
+  if (!user_id || typeof location !== "string") {
+    return { success: false, error: "Unauthorized or invalid location" };
+  }
 
-    if (existing.length > 0) {
-      const result = await db
-        .update(reading_progress)
-        .set({
-          location: location,
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(reading_progress.userId, user_id),
-            eq(reading_progress.bookId, book_id),
-          ),
-        );
-    } else {
-      await db.insert(reading_progress).values({
+  try {
+    await db
+      .insert(reading_progress)
+      .values({
         userId: user_id,
         bookId: book_id,
         location: location,
         updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [reading_progress.userId, reading_progress.bookId],
+        set: { location: location, updatedAt: new Date() },
       });
-    }
+    return { success: true };
   } catch (error) {
     console.error("Error posting progress:", error);
     return { success: false, error };
