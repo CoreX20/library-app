@@ -21,7 +21,8 @@ const BookVideo = ({ videoUrl }: { videoUrl: string }) => {
         loading="lazy"
         src={videoUrl}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        referrerPolicy="no-referrer"
+        title="Book trailer"
+        referrerPolicy="strict-origin-when-cross-origin"
         allowFullScreen
       ></iframe>
     </ImageKitProvider>
