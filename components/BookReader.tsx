@@ -29,6 +29,7 @@ const BookReader = ({
   const [location, setLocation] = useState<string | number>("");
   const lastSavedLocation = useRef<string | number | null>(null);
   const [fileType, setFileType] = useState<"pdf" | "epub" | null>(null);
+  const [showResume, setShowResume] = useState(false);
 
   useEffect(() => {
     const initializeBook = async () => {
@@ -62,6 +63,7 @@ const BookReader = ({
           if (localProgress) {
             setLocation(localProgress);
             lastSavedLocation.current = localProgress;
+            setShowResume(localProgress !== "0");
             // console.log("Progress diambil dari Local Storage:", localProgress);
           } else {
             // If it's not in Local Storage, get it from the server
@@ -69,6 +71,7 @@ const BookReader = ({
             if (progress?.location) {
               setLocation(progress.location);
               lastSavedLocation.current = progress.location;
+              setShowResume(progress.location !== "0");
               localStorage.setItem(
                 `bookprogress-${book_id}`,
                 progress.location
@@ -151,7 +154,30 @@ const BookReader = ({
   // }, [location, user_id, book_id, isBookInitialized]);
 
   return (
-    <div className="h-screen">
+    <div className="relative h-dvh">
+      {showResume && (
+        <div className="absolute inset-x-4 top-4 z-50 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white p-4 text-gray-800 shadow-lg">
+          <p className="text-sm">Anda terakhir membaca di sini. Lanjutkan?</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowResume(false)}
+              className="rounded-lg bg-indigo-600 px-3 py-2 text-white"
+            >
+              Lanjutkan
+            </button>
+            <button
+              onClick={() => {
+                setLocation(0);
+                localStorage.setItem(`bookprogress-${book_id}`, "0");
+                setShowResume(false);
+              }}
+              className="rounded-lg border px-3 py-2"
+            >
+              Mulai dari awal
+            </button>
+          </div>
+        </div>
+      )}
       {fileType === "epub" && bookUrl ? (
         <EpubReader
           bookUrl={bookUrl}

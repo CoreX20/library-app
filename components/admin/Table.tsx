@@ -10,20 +10,28 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import React, { useTransition } from "react";
+import Link from "next/link";
 import { PencilLine, Trash2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface Props {
   title?: string;
   books: Book[];
-  onDelete: (id: string) => void;
-  onEdit: (id: string) => void;
+  onDelete: (id: string) => Promise<{ success: boolean; message?: string }>;
 }
 
-export function TableBook({ title, books, onDelete, onEdit }: Props) {
+export function TableBook({ title, books, onDelete }: Props) {
   const [isPending, startTransition] = useTransition();
   const handleDelete = (id: string) => {
     startTransition(async () => {
-      await onDelete(id);
+      const result = await onDelete(id);
+      if (!result.success) {
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
     });
   };
 
@@ -55,9 +63,9 @@ export function TableBook({ title, books, onDelete, onEdit }: Props) {
                 : "Unknown"}
             </TableCell>
             <TableCell className="flex flex-row gap-4 p-4">
-              <button onClick={() => onEdit(book.id)}>
+              <Link href={`/admin/books/${book.id}/edit`}>
                 <PencilLine color="#004cff" />
-              </button>
+              </Link>
               <button
                 onClick={() => handleDelete(book.id)}
                 disabled={isPending}
