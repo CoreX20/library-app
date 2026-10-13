@@ -73,7 +73,9 @@ const EpubReader = ({
         }}
       />
 
-      <p className="text-white font-bold">{page}</p>
+      <p className="absolute inset-x-0 bottom-2 z-10 text-center text-sm font-bold text-gray-700">
+        {page}
+      </p>
     </>
   );
 };

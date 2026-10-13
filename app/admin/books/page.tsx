@@ -4,19 +4,8 @@ import Link from "next/link";
 import { TableBook } from "@/components/admin/Table";
 import { db } from "@/database/drizzle";
 import { books } from "@/database/schema";
-import { desc, eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
-
-const handleDeleteBook = async (id: string) => {
-  "use server";
-  await db.delete(books).where(eq(books.id, id));
-  revalidatePath("/admin/books");
-};
-
-const handleEditBook = async (id: string) => {
-  "use server";
-  console.log(id);
-};
+import { desc } from "drizzle-orm";
+import { deleteBook } from "@/lib/admin/actions/book";
 
 const Page = async () => {
   const listBooks = (await db
@@ -39,8 +28,7 @@ const Page = async () => {
       <div className="mt-7 w-full overflow-hidden">
         <TableBook
           books={listBooks}
-          onDelete={handleDeleteBook}
-          onEdit={handleEditBook}
+          onDelete={deleteBook}
         />
       </div>
     </section>
