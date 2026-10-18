@@ -71,7 +71,14 @@ const FileUpload = ({
     text: variant === "dark" ? "text-light-100" : "text-dark-400",
   };
 
+  const resetUpload = () => {
+    setProgress(0);
+    setIsUploading(false);
+  };
+
   const onError = (error: any) => {
+    // Without this the button stays disabled and every later click is ignored.
+    resetUpload();
     toast({
       title: `${type} Upload failed`,
       description: `Your ${type} could not be uploaded. Please try again.`,
@@ -81,6 +88,7 @@ const FileUpload = ({
   const onSuccess = (res: any) => {
     setFile(res);
     onFileChange(res.filePath);
+    resetUpload();
 
     toast({
       title: `${type} Upload Complete`,
@@ -130,14 +138,13 @@ const FileUpload = ({
           setProgress(0);
         }}
         onUploadProgress={({ loaded, total }) => {
-          const percent = Math.round((loaded / total) * 100);
+          const percent = Math.round((loaded / (total || 1)) * 100);
           setProgress(percent);
         }}
         folder={folder}
         accept={accept}
         onSuccess={(res) => {
           onSuccess(res);
-          setIsUploading(false);
         }}
       />
       <button
