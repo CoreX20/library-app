@@ -136,11 +136,19 @@
 
   /* Search */
   .search {
-    @apply relative mt-10 flex min-h-14 w-full items-center rounded-xl bg-dark-300 px-4;
+    @apply relative flex min-h-14 w-full items-center rounded-xl bg-dark-300 px-4;
   }
 
+  /* UA stylesheets paint <input type="search"> white, so be explicit. */
   .search-input {
-    @apply w-full border-none font-bold placeholder:font-normal text-white placeholder:text-light-100 focus-visible:ring-0 focus-visible:shadow-none !important;
+    @apply w-full border-none bg-transparent font-bold placeholder:font-normal text-white placeholder:text-light-100 focus-visible:ring-0 focus-visible:shadow-none !important;
+    background-color: transparent !important;
+    appearance: none;
+  }
+
+  /* Chromium adds its own clear button, which ignores the dark theme. */
+  .search-input::-webkit-search-cancel-button {
+    appearance: none;
   }
 
   /* Book Receipt */

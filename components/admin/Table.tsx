@@ -9,10 +9,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import React, { useTransition } from "react";
+import React from "react";
 import Link from "next/link";
-import { PencilLine, Trash2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { PencilLine } from "lucide-react";
+
+import DeleteBookDialog from "@/components/admin/DeleteBookDialog";
 
 interface Props {
   title?: string;
@@ -20,29 +21,17 @@ interface Props {
   onDelete: (id: string) => Promise<{ success: boolean; message?: string }>;
 }
 
+// ponytail: the row is rendered as-is; the delete confirmation owns its own pending state.
 export function TableBook({ title, books, onDelete }: Props) {
-  const [isPending, startTransition] = useTransition();
-  const handleDelete = (id: string) => {
-    startTransition(async () => {
-      const result = await onDelete(id);
-      if (!result.success) {
-        toast({
-          title: "Error",
-          description: result.message,
-          variant: "destructive",
-        });
-      }
-    });
-  };
-
   return (
     <Table className="p-4">
-      <TableCaption>{title}</TableCaption>
+      {title && <TableCaption>{title}</TableCaption>}
       <TableHeader>
         <TableRow>
           <TableHead className="w-64">Book Title</TableHead>
           <TableHead>Author</TableHead>
-          <TableHead>Genre</TableHead>
+          <TableHead>Rating</TableHead>
+          <TableHead>Copies</TableHead>
           <TableHead>Date Created</TableHead>
           <TableHead>Action</TableHead>
         </TableRow>
@@ -52,7 +41,14 @@ export function TableBook({ title, books, onDelete }: Props) {
           <TableRow key={book.id}>
             <TableCell className="font-medium">{book.title}</TableCell>
             <TableCell>{book.author}</TableCell>
-            <TableCell>{book.genre}</TableCell>
+            <TableCell>{book.rating}</TableCell>
+            <TableCell
+              className={
+                book.availableCopies === 0 ? "text-red-800" : "text-dark-400"
+              }
+            >
+              {book.availableCopies} of {book.totalCopies} available
+            </TableCell>
             <TableCell>
               {book.createdAt
                 ? new Date(book.createdAt).toLocaleDateString("en-US", {
@@ -62,16 +58,19 @@ export function TableBook({ title, books, onDelete }: Props) {
                   })
                 : "Unknown"}
             </TableCell>
-            <TableCell className="flex flex-row gap-4 p-4">
-              <Link href={`/admin/books/${book.id}/edit`}>
-                <PencilLine color="#004cff" />
-              </Link>
-              <button
-                onClick={() => handleDelete(book.id)}
-                disabled={isPending}
-              >
-                <Trash2 color="#ff0000" />
-              </button>
+            <TableCell>
+              <div className="flex flex-row items-center gap-4">
+                <Link
+                  href={`/admin/books/${book.id}/edit`}
+                  aria-label={`Edit ${book.title}`}
+                >
+                  <PencilLine color="#004cff" />
+                </Link>
+                <DeleteBookDialog
+                  bookTitle={book.title}
+                  onConfirm={() => onDelete(book.id)}
+                />
+              </div>
             </TableCell>
           </TableRow>
         ))}
